@@ -25,6 +25,7 @@
                     <button type="button" id="sendButton">Send</button>
                     <button type="button" id="clearMsgsButton">Clear Msgs (Local)</button>
                     <input type="text" id="key" placeholder="Encryption Key" autofocus="true" />
+                    <input type="text" id="username" placeholder="Username" autofocus="true" />
                 </td>
             </tr>
             <tr>
@@ -43,6 +44,7 @@
                 var conn = null;
                 var recvIdInput = document.getElementById("receiver-id");
                 var key = document.getElementById("key");
+                var username = document.getElementById("username");
                 var status = document.getElementById("status");
                 var message = document.getElementById("message");
                 var sendMessageBox = document.getElementById("sendMessageBox");
@@ -129,7 +131,7 @@
                     });
                     // Handle incoming data (messages only since this is the signal sender)
                     conn.on('data', function (data) {
-                        addMessage("<span class=\"peerMsg\">Peer:</span> " + CryptoJS.AES.decrypt(data, key.value).toString(CryptoJS.enc.Utf8));
+                        addMessage(CryptoJS.AES.decrypt(CryptoJS.AES.decrypt(data, key.value).toString(CryptoJS.enc.Utf8), key.value).toString(CryptoJS.enc.Utf8));
                     });
                     conn.on('close', function () {
                         status.innerHTML = "Connection closed";
@@ -202,14 +204,12 @@
                 // Send message
                 sendButton.addEventListener('click', function () {
                     if (conn && conn.open) {
-                        var msg = sendMessageBox.value;
+                        var msg = username.value + ": " + sendMessageBox.value;
                         sendMessageBox.value = "";
-                        var enmsg = CryptoJS.AES.encrypt(msg, key.value).toString();
-                        var bytes  = CryptoJS.AES.decrypt(enmsg, key.value);
-var originalText = bytes.toString(CryptoJS.enc.Utf8);
+                        var enmsg = CryptoJS.AES.encrypt(CryptoJS.AES.encrypt(msg, key.value).toString(), key.value).toString();
                         conn.send(enmsg);
                         console.log("Sent: " + msg);
-                        addMessage("<span class=\"selfMsg\">Self: </span> " + msg);
+                        addMessage(msg);
                     } else {
                         console.log('Connection is closed');
                     }
